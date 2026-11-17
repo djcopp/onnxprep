@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="200" viewBox="0 0 880 200" role="img">
+<title>The Whisper front end as standard ONNX ops</title>
+<rect x="0.0" y="30.0" width="114.0" height="82.0" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.2"/>
+<text x="57.0" y="53.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#e6edf3" text-anchor="middle" dominant-baseline="middle">audio</text>
+<text x="57.0" y="71.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="middle" dominant-baseline="middle">16 kHz mono</text>
+<text x="57.0" y="89.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="middle" dominant-baseline="middle">any length</text>
+<rect x="127.0" y="30.0" width="114.0" height="82.0" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.2"/>
+<text x="184.0" y="62.0" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="13" font-weight="600" fill="#e6edf3" text-anchor="middle" dominant-baseline="middle">Pad, Slice</text>
+<text x="184.0" y="80.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="middle" dominant-baseline="middle">to 30 s</text>
+<path d="M114.0,71.0 L125.0,71.0" fill="none" stroke="#6e7681" stroke-width="1.5"/>
+<path d="M118.7,74.0 L125.0,71.0 L118.7,68.0 Z" fill="#6e7681"/>
+<rect x="254.0" y="30.0" width="114.0" height="82.0" rx="8" fill="#132a47" stroke="#3987e5" stroke-width="1.2"/>
+<text x="311.0" y="53.0" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="13" font-weight="600" fill="#e6edf3" text-anchor="middle" dominant-baseline="middle">Conv</text>
+<text x="311.0" y="71.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="middle" dominant-baseline="middle">DFT kernels</text>
+<text x="311.0" y="89.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="middle" dominant-baseline="middle">hop 160</text>
+<path d="M241.0,71.0 L252.0,71.0" fill="none" stroke="#6e7681" stroke-width="1.5"/>
+<path d="M245.7,74.0 L252.0,71.0 L245.7,68.0 Z" fill="#6e7681"/>
+<rect x="381.0" y="30.0" width="114.0" height="82.0" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.2"/>
+<text x="438.0" y="62.0" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="13" font-weight="600" fill="#e6edf3" text-anchor="middle" dominant-baseline="middle">Mul, Add</text>
+<text x="438.0" y="80.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="middle" dominant-baseline="middle">power</text>
+<path d="M368.0,71.0 L379.0,71.0" fill="none" stroke="#6e7681" stroke-width="1.5"/>
+<path d="M372.7,74.0 L379.0,71.0 L372.7,68.0 Z" fill="#6e7681"/>
+<rect x="508.0" y="30.0" width="114.0" height="82.0" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.2"/>
+<text x="565.0" y="62.0" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="13" font-weight="600" fill="#e6edf3" text-anchor="middle" dominant-baseline="middle">MatMul</text>
+<text x="565.0" y="80.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="middle" dominant-baseline="middle">mel filters</text>
+<path d="M495.0,71.0 L506.0,71.0" fill="none" stroke="#6e7681" stroke-width="1.5"/>
+<path d="M499.7,74.0 L506.0,71.0 L499.7,68.0 Z" fill="#6e7681"/>
+<rect x="635.0" y="30.0" width="114.0" height="82.0" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.2"/>
+<text x="692.0" y="62.0" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="13" font-weight="600" fill="#e6edf3" text-anchor="middle" dominant-baseline="middle">Log, Max, Div</text>
+<text x="692.0" y="80.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="middle" dominant-baseline="middle">log scaling</text>
+<path d="M622.0,71.0 L633.0,71.0" fill="none" stroke="#6e7681" stroke-width="1.5"/>
+<path d="M626.7,74.0 L633.0,71.0 L626.7,68.0 Z" fill="#6e7681"/>
+<rect x="762.0" y="30.0" width="114.0" height="82.0" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.2"/>
+<text x="819.0" y="62.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#e6edf3" text-anchor="middle" dominant-baseline="middle">features</text>
+<text x="819.0" y="80.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="middle" dominant-baseline="middle">1 × 80 × 3000</text>
+<path d="M749.0,71.0 L760.0,71.0" fill="none" stroke="#6e7681" stroke-width="1.5"/>
+<path d="M753.7,74.0 L760.0,71.0 L753.7,68.0 Z" fill="#6e7681"/>
+<line x1="311.0" y1="112.0" x2="311.0" y2="150.0" stroke="#3987e5" stroke-width="1.2" stroke-dasharray="3 3"/>
+<text x="311.0" y="166.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="middle" dominant-baseline="middle">the STFT as a strided convolution, which every GPU backend implements</text>
+</svg>

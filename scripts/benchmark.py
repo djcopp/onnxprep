@@ -63,22 +63,20 @@ def median_ms(fn, warmup: int = 3, reps: int = 30) -> float:
 
 
 def baselines(audio: np.ndarray) -> list[dict]:
+    """Hugging Face's two implementations, called directly. Its __call__ silently picks the torch one
+    whenever torch is installed, so timing __call__ alone says nothing about the numpy path."""
     from transformers import WhisperFeatureExtractor
 
     fe = WhisperFeatureExtractor(feature_size=80)
-    rows = [
-        {
-            "name": "Hugging Face, numpy",
-            "ms": median_ms(lambda: fe(audio, sampling_rate=SAMPLE_RATE, return_tensors="np")),
-        }
-    ]
+    batch = audio[None]
+    rows = [{"name": "Hugging Face, numpy", "ms": median_ms(lambda: fe._np_extract_fbank_features(batch, "cpu"))}]
     try:
         import torch
 
         devices = ["cpu"] + (["mps"] if torch.backends.mps.is_available() else [])
         devices += ["cuda"] if torch.cuda.is_available() else []
         for device in devices:
-            ms = median_ms(lambda d=device: fe(audio, sampling_rate=SAMPLE_RATE, return_tensors="np", device=d))
+            ms = median_ms(lambda d=device: fe._torch_extract_fbank_features(batch, d))
             rows.append({"name": f"Hugging Face, torch {device}", "ms": ms})
     except ImportError:
         pass

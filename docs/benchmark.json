@@ -1,0 +1,57 @@
+{
+ "machine": "Darwin arm64",
+ "onnxruntime": "1.32.0",
+ "clip_seconds": 30.0,
+ "baselines": [
+  {
+   "name": "Hugging Face, numpy",
+   "ms": 11.2728540043463
+  },
+  {
+   "name": "Hugging Face, torch cpu",
+   "ms": 1.4201254962245002
+  },
+  {
+   "name": "Hugging Face, torch mps",
+   "ms": 1.4831250009592623
+  }
+ ],
+ "onnx": [
+  {
+   "variant": "conv",
+   "provider": "CoreML",
+   "nodes": "15/23",
+   "ms": 8.102
+  },
+  {
+   "variant": "conv",
+   "provider": "CPU",
+   "nodes": "all",
+   "ms": 3.145
+  },
+  {
+   "variant": "conv, static input",
+   "provider": "CoreML",
+   "nodes": "15/17",
+   "ms": 4.599
+  },
+  {
+   "variant": "conv, static input",
+   "provider": "CPU",
+   "nodes": "all",
+   "ms": 2.942
+  },
+  {
+   "variant": "native STFT",
+   "provider": "CoreML",
+   "nodes": "4/23",
+   "ms": 74.937
+  },
+  {
+   "variant": "native STFT",
+   "provider": "CPU",
+   "nodes": "all",
+   "ms": 73.855
+  }
+ ]
+}

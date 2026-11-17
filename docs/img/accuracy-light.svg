@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="300" viewBox="0 0 880 300" role="img">
+<title>Error against the reference</title>
+<line x1="70.0" y1="250.0" x2="880.0" y2="250.0" stroke="#d8dee4" stroke-width="1"/>
+<text x="60.0" y="250.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#59636e" text-anchor="end" dominant-baseline="middle">1e-6</text>
+<line x1="70.0" y1="208.0" x2="880.0" y2="208.0" stroke="#d8dee4" stroke-width="1"/>
+<text x="60.0" y="208.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#59636e" text-anchor="end" dominant-baseline="middle">1e-5</text>
+<line x1="70.0" y1="166.0" x2="880.0" y2="166.0" stroke="#d8dee4" stroke-width="1"/>
+<text x="60.0" y="166.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#59636e" text-anchor="end" dominant-baseline="middle">1e-4</text>
+<line x1="70.0" y1="124.0" x2="880.0" y2="124.0" stroke="#d8dee4" stroke-width="1"/>
+<text x="60.0" y="124.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#59636e" text-anchor="end" dominant-baseline="middle">1e-3</text>
+<line x1="70.0" y1="82.0" x2="880.0" y2="82.0" stroke="#d8dee4" stroke-width="1"/>
+<text x="60.0" y="82.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#59636e" text-anchor="end" dominant-baseline="middle">1e-2</text>
+<line x1="70.0" y1="40.0" x2="880.0" y2="40.0" stroke="#d8dee4" stroke-width="1"/>
+<text x="60.0" y="40.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#59636e" text-anchor="end" dominant-baseline="middle">1e-1</text>
+<rect x="70.0" y="8.0" width="12.0" height="12.0" rx="3" fill="#2a78d6"/>
+<text x="88.0" y="14.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e" text-anchor="start" dominant-baseline="middle">conv STFT (default)</text>
+<rect x="248.8" y="8.0" width="12.0" height="12.0" rx="3" fill="#eb6834"/>
+<text x="266.8" y="14.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e" text-anchor="start" dominant-baseline="middle">native STFT op</text>
+<path d="M141.2,250 V241.1 Q141.2,237.1 145.2,237.1 H165.2 Q169.2,237.1 169.2,241.1 V250 Z" fill="#2a78d6"/>
+<text x="155.2" y="227.1" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#1f2328" text-anchor="middle" dominant-baseline="middle">2e-6</text>
+<path d="M173.2,250 V165.6 Q173.2,161.6 177.2,161.6 H197.2 Q201.2,161.6 201.2,165.6 V250 Z" fill="#eb6834"/>
+<text x="187.2" y="151.6" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#1f2328" text-anchor="middle" dominant-baseline="middle">1e-4</text>
+<text x="171.2" y="268.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e" text-anchor="middle" dominant-baseline="middle">0.37 s clip</text>
+<path d="M343.8,250 V227.4 Q343.8,223.4 347.8,223.4 H367.8 Q371.8,223.4 371.8,227.4 V250 Z" fill="#2a78d6"/>
+<text x="357.8" y="213.4" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#1f2328" text-anchor="middle" dominant-baseline="middle">4e-6</text>
+<path d="M375.8,250 V139.8 Q375.8,135.8 379.8,135.8 H399.8 Q403.8,135.8 403.8,139.8 V250 Z" fill="#eb6834"/>
+<text x="389.8" y="125.8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#1f2328" text-anchor="middle" dominant-baseline="middle">5e-4</text>
+<text x="373.8" y="268.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e" text-anchor="middle" dominant-baseline="middle">7 s clip</text>
+<path d="M546.2,250 V215.3 Q546.2,211.3 550.2,211.3 H570.2 Q574.2,211.3 574.2,215.3 V250 Z" fill="#2a78d6"/>
+<text x="560.2" y="201.3" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#1f2328" text-anchor="middle" dominant-baseline="middle">8e-6</text>
+<path d="M578.2,250 V131.9 Q578.2,127.9 582.2,127.9 H602.2 Q606.2,127.9 606.2,131.9 V250 Z" fill="#eb6834"/>
+<text x="592.2" y="117.9" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#1f2328" text-anchor="middle" dominant-baseline="middle">8e-4</text>
+<text x="576.2" y="268.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e" text-anchor="middle" dominant-baseline="middle">30 s clip</text>
+<path d="M748.8,250 V215.3 Q748.8,211.3 752.8,211.3 H772.8 Q776.8,211.3 776.8,215.3 V250 Z" fill="#2a78d6"/>
+<text x="762.8" y="201.3" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#1f2328" text-anchor="middle" dominant-baseline="middle">8e-6</text>
+<path d="M780.8,250 V131.9 Q780.8,127.9 784.8,127.9 H804.8 Q808.8,127.9 808.8,131.9 V250 Z" fill="#eb6834"/>
+<text x="794.8" y="117.9" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#1f2328" text-anchor="middle" dominant-baseline="middle">8e-4</text>
+<text x="778.8" y="268.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#59636e" text-anchor="middle" dominant-baseline="middle">41.5 s clip</text>
+<text x="70.0" y="290.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#59636e" text-anchor="start" dominant-baseline="middle">largest absolute error against Hugging Face WhisperFeatureExtractor, log scale</text>
+</svg>
