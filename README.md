@@ -110,6 +110,11 @@ The features range from about -1 to 1, so these differences are float32 rounding
 | onnxprep, CoreML | 4.5 |
 | Hugging Face, numpy | 10.7 |
 
+For one clip at a time, use WASM: it is the fastest engine here and the most predictable. WebGPU pays off
+for batches. A single small WebGPU call is mostly dispatch and read-back overhead, and on some machines
+and browser states it takes 100 ms or more. Multithreaded WASM needs the page to be cross-origin isolated
+(COOP/COEP headers); without them it runs on one thread.
+
 On a desktop that already has PyTorch, its FFT-based extractor is faster. onnxprep is for the places PyTorch
 isn't: browsers, phones, and services written in other languages.
 

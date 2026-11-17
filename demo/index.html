@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>onnxprep demo</title>
 <link rel="icon" href="data:,">
+<script src="isolate.js"></script>
 <meta name="description" content="Whisper's audio front end running in your browser from one ONNX file.">
 <style>
   :root {
@@ -34,6 +35,9 @@
   button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   button:disabled { opacity: 0.5; cursor: default; }
   input[type=file] { display: none; }
+  .engine { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 15px; }
+  select { font: inherit; font-size: 15px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--ink); }
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
   canvas { width: 100%; height: 240px; display: block; border-radius: 6px; image-rendering: pixelated; }
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 16px; }
@@ -49,20 +53,23 @@
 <main>
   <h1>Whisper features, computed in your browser</h1>
   <p class="lead">Record a few seconds or load an audio file. One 0.7 MB ONNX file turns the raw samples into the
-    log-mel features Whisper's encoder expects, on WebGPU when your browser has it and WASM when it doesn't.</p>
+    log-mel features Whisper's encoder expects, in WebAssembly or on WebGPU.</p>
 
   <div class="controls">
     <button class="primary" id="record">Record 5 seconds</button>
     <label class="button">Load an audio file<input type="file" id="file" accept="audio/*"></label>
     <button id="sample">Use a test tone</button>
     <button id="compare" disabled>Compare with transformers.js</button>
+    <label class="engine">Engine
+      <select id="engine"><option value="wasm">WASM</option><option value="webgpu">WebGPU</option></select>
+    </label>
   </div>
 
   <div class="panel">
     <canvas id="spec" width="3000" height="80" aria-label="Log-mel spectrogram of the audio"></canvas>
     <div class="stats">
-      <div class="stat"><b id="t-onnx">–</b><span>onnxprep, <span id="backend">loading…</span></span></div>
-      <div class="stat"><b id="t-tjs">–</b><span>transformers.js, same audio</span></div>
+      <div class="stat"><b id="t-onnx">–</b><span>onnxprep, <span id="backend">loading…</span>, median of 10</span></div>
+      <div class="stat"><b id="t-tjs">–</b><span>transformers.js, same audio, median of 10</span></div>
       <div class="stat"><b id="diff">–</b><span>largest difference between the two</span></div>
       <div class="stat"><b id="dur">–</b><span>audio length</span></div>
     </div>
@@ -78,16 +85,34 @@ const SR = 16000, N = 480000;
 const $ = (id) => document.getElementById(id);
 let session, backend, lastAudio, lastFeatures;
 
+// WASM is the default: for one clip at a time it is the fastest and the most predictable engine. WebGPU pays
+// off for batches, but a single small call is mostly dispatch and read-back overhead, which varies a lot
+// between machines. Switching reloads the page (onnxruntime-web 1.30 can't run WASM after WebGPU).
+const params = new URLSearchParams(location.search);
+const wanted = params.get("engine") === "webgpu" && "gpu" in navigator ? "webgpu" : "wasm";
+$("engine").value = wanted;
+$("engine").onchange = () => { location.search = `engine=${$("engine").value}`; };
+ort.env.wasm.numThreads = self.crossOriginIsolated ? navigator.hardwareConcurrency : 1;
+
 async function createSession() {
-  for (const ep of ["webgpu", "wasm"]) {
+  for (const ep of [wanted, "wasm"]) {
     try {
       session = await ort.InferenceSession.create("whisper_frontend.onnx", { executionProviders: [ep] });
       backend = ep;
-      $("backend").textContent = ep === "webgpu" ? "WebGPU" : "WASM";
+      const threads = ort.env.wasm.numThreads;
+      $("backend").textContent = ep === "webgpu" ? "WebGPU" : `WASM, ${threads} thread${threads === 1 ? "" : "s"}`;
       return;
     } catch (e) { console.warn(`${ep} unavailable`, e); }
   }
   $("backend").textContent = "could not load the model";
+}
+
+async function median(fn, reps = 10) {
+  await fn();
+  const t = [];
+  for (let i = 0; i < reps; i++) { const s = performance.now(); await fn(); t.push(performance.now() - s); }
+  t.sort((a, b) => a - b);
+  return (t[4] + t[5]) / 2;
 }
 
 async function toMono16k(buffer) {
@@ -122,11 +147,8 @@ async function run(audio) {
   if (!session) return;
   lastAudio = audio;
   const input = new ort.Tensor("float32", audio, [audio.length]);
-  await session.run({ audio: input });  // warm-up: the first run compiles GPU kernels
-  const t = performance.now();
-  const out = await session.run({ audio: input });
-  const ms = performance.now() - t;
-  lastFeatures = out.input_features.data;
+  lastFeatures = (await session.run({ audio: input })).input_features.data;
+  const ms = await median(() => session.run({ audio: input }));
   $("t-onnx").textContent = `${ms.toFixed(1)} ms`;
   $("dur").textContent = `${(audio.length / SR).toFixed(1)} s`;
   $("t-tjs").textContent = "–"; $("diff").textContent = "–";
@@ -167,10 +189,8 @@ $("compare").onclick = async () => {
   const { WhisperFeatureExtractor } = await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2/dist/transformers.min.js");
   const fe = new WhisperFeatureExtractor({ feature_size: 80, sampling_rate: SR, hop_length: 160, chunk_length: 30,
     n_fft: 400, n_samples: N, nb_max_frames: 3000, padding_value: 0 });
-  await fe(lastAudio);
-  const t = performance.now();
   const ref = (await fe(lastAudio)).input_features.data;
-  $("t-tjs").textContent = `${(performance.now() - t).toFixed(1)} ms`;
+  $("t-tjs").textContent = `${(await median(() => fe(lastAudio))).toFixed(1)} ms`;
   let d = 0;
   for (let i = 0; i < ref.length; i++) d = Math.max(d, Math.abs(ref[i] - lastFeatures[i]));
   $("diff").textContent = d.toExponential(1);
