@@ -1,7 +1,7 @@
-"""Tiny graph builder over ``onnx.helper``: no dependencies beyond onnx + numpy.
+"""A small graph builder over ``onnx.helper``.
 
-Every recipe in onnxprep is built from *standard* ``ai.onnx`` operators only, so the resulting models
-run on any ONNX runtime / execution provider without custom-op libraries.
+Recipes use standard ``ai.onnx`` operators only, so the models run on any ONNX runtime and execution
+provider without a custom-op library.
 """
 
 from __future__ import annotations

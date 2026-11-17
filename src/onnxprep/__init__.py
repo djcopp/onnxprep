@@ -1,4 +1,4 @@
-"""onnxprep — portable pre/post-processing as pure standard-op ONNX graphs."""
+"""onnxprep: pre- and post-processing steps as ONNX graphs built from standard operators only."""
 
 from . import audio
 from ._graph import OPSET, Graph

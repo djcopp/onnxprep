@@ -1,7 +1,7 @@
 [project]
 name = "onnxprep"
 version = "0.1.0"
-description = "Portable pre/post-processing as pure standard-op ONNX graphs: raw input in, final answer out, on any runtime and any GPU."
+description = "Model pre- and post-processing as ONNX graphs built from standard operators, so they run on any runtime."
 readme = "README.md"
 license = "MIT"
 keywords = ["onnx", "onnxruntime", "preprocessing", "webgpu", "whisper", "spectrogram", "edge-ml"]
@@ -29,6 +29,7 @@ dev = [
     "onnxruntime>=1.32.0",
     "pytest>=9.2.0",
     "ruff>=0.17.5",
+    "torch>=2.15.0",
     "transformers>=5.23.0",
 ]
 
