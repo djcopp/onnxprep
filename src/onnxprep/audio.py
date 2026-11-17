@@ -1,0 +1,206 @@
+"""Audio front ends as standard-op ONNX graphs.
+
+``whisper_log_mel`` reproduces OpenAI Whisper's ``log_mel_spectrogram(pad_or_trim(audio))``:
+raw 16 kHz mono float32 PCM in, ``[1, n_mels, 3000]`` log-mel features out — so a browser / mobile /
+server app can feed microphone samples straight into the model with no hand-ported DSP code.
+
+Two STFT strategies:
+
+* ``stft="conv"`` (default) — the STFT is expressed as a strided ``Conv`` whose kernels are the windowed
+  DFT basis. ``Conv`` is implemented on every GPU execution provider (CUDA, TensorRT, CoreML, DirectML,
+  WebGPU), so the whole front end stays on the accelerator.
+* ``stft="native"`` — uses the ``STFT`` operator (opset 17). Smaller file, but many GPU execution
+  providers don't implement it, so it silently falls back to CPU.
+"""
+
+from __future__ import annotations
+
+from typing import Literal
+
+import numpy as np
+import onnx
+
+from ._graph import Graph
+
+# Whisper constants (openai/whisper/audio.py)
+SAMPLE_RATE = 16_000
+N_FFT = 400
+HOP_LENGTH = 160
+CHUNK_LENGTH = 30
+N_SAMPLES = CHUNK_LENGTH * SAMPLE_RATE  # 480_000
+N_FRAMES = N_SAMPLES // HOP_LENGTH  # 3_000
+
+
+# ───────────────────────────── filterbanks & windows (numpy, build time only) ─────────────────────────────
+def _hz_to_mel_slaney(f):
+    f = np.asarray(f, dtype=np.float64)
+    f_sp = 200.0 / 3
+    mels = f / f_sp
+    min_log_hz = 1000.0
+    min_log_mel = min_log_hz / f_sp
+    logstep = np.log(6.4) / 27.0
+    return np.where(f >= min_log_hz, min_log_mel + np.log(np.maximum(f, 1e-12) / min_log_hz) / logstep, mels)
+
+
+def _mel_to_hz_slaney(m):
+    m = np.asarray(m, dtype=np.float64)
+    f_sp = 200.0 / 3
+    freqs = f_sp * m
+    min_log_hz = 1000.0
+    min_log_mel = min_log_hz / f_sp
+    logstep = np.log(6.4) / 27.0
+    return np.where(m >= min_log_mel, min_log_hz * np.exp(logstep * (m - min_log_mel)), freqs)
+
+
+def mel_filterbank(sr: int, n_fft: int, n_mels: int, fmin: float = 0.0, fmax: float | None = None) -> np.ndarray:
+    """Slaney-scale, Slaney-normalised triangular filters — identical to ``librosa.filters.mel`` defaults
+    (which is what Whisper ships in ``mel_filters.npz``). Returns ``[n_mels, n_fft // 2 + 1]`` float32."""
+    fmax = sr / 2 if fmax is None else fmax
+    fftfreqs = np.fft.rfftfreq(n_fft, 1.0 / sr)
+    mel_f = _mel_to_hz_slaney(np.linspace(_hz_to_mel_slaney(fmin), _hz_to_mel_slaney(fmax), n_mels + 2))
+    fdiff = np.diff(mel_f)
+    ramps = mel_f[:, None] - fftfreqs[None, :]
+    lower = -ramps[:-2] / fdiff[:-1, None]
+    upper = ramps[2:] / fdiff[1:, None]
+    weights = np.maximum(0, np.minimum(lower, upper))
+    weights *= (2.0 / (mel_f[2 : n_mels + 2] - mel_f[:n_mels]))[:, None]
+    return weights.astype(np.float32)
+
+
+def hann_window(n: int, periodic: bool = True) -> np.ndarray:
+    m = n if periodic else n - 1
+    return (0.5 - 0.5 * np.cos(2 * np.pi * np.arange(n) / m)).astype(np.float64)
+
+
+def _dft_conv_kernels(n_fft: int, window: np.ndarray) -> np.ndarray:
+    """``[2 * (n_fft//2+1), 1, n_fft]`` Conv weights: windowed cos (real) then windowed sin (imag) bases."""
+    k = np.arange(n_fft // 2 + 1)[:, None]
+    n = np.arange(n_fft)[None, :]
+    ang = 2 * np.pi * k * n / n_fft
+    real = np.cos(ang) * window[None, :]
+    imag = -np.sin(ang) * window[None, :]
+    return np.concatenate([real, imag], axis=0)[:, None, :].astype(np.float32)
+
+
+# ───────────────────────────── graph pieces ─────────────────────────────
+def _pad_or_trim(g: Graph, x: str, length: int) -> str:
+    """1-D: zero-pad at the end or truncate to exactly ``length`` samples (branch-free)."""
+    n = g.op("Shape", x)
+    need = g.op("Sub", g.const([length], dtype=np.int64), n)
+    need = g.op("Max", need, g.const([0], dtype=np.int64))
+    pads = g.op("Concat", g.const([0], dtype=np.int64), need, axis=0)
+    padded = g.op("Pad", x, pads, g.const(0.0, dtype=np.float32), mode="constant")
+    return g.op(
+        "Slice",
+        padded,
+        g.const([0], dtype=np.int64),
+        g.const([length], dtype=np.int64),
+        g.const([0], dtype=np.int64),
+    )
+
+
+def _power_spectrogram(g: Graph, x: str, n_fft: int, hop: int, stft: str) -> str:
+    """``x``: 1-D signal → ``[1, n_fft//2+1, frames]`` power spectrum, centred frames with reflect padding
+    (``torch.stft(center=True, pad_mode="reflect")``)."""
+    bins = n_fft // 2 + 1
+    window = hann_window(n_fft)
+    x3 = g.op("Reshape", x, g.const([1, 1, -1], dtype=np.int64))
+    x3 = g.op("Pad", x3, g.const([0, 0, n_fft // 2, 0, 0, n_fft // 2], dtype=np.int64), mode="reflect")
+    if stft == "conv":
+        spec = g.op(
+            "Conv",
+            x3,
+            g.const(_dft_conv_kernels(n_fft, window), name="dft_kernels"),
+            strides=[hop],
+            kernel_shape=[n_fft],
+            pads=[0, 0],  # explicit: CoreML's ML Program converter rejects Conv without `pads`
+            dilations=[1],
+            group=1,
+        )  # [1, 2*bins, F]
+        sq = g.op("Mul", spec, spec)
+        re = g.op(
+            "Slice",
+            sq,
+            g.const([0], dtype=np.int64),
+            g.const([bins], dtype=np.int64),
+            g.const([1], dtype=np.int64),
+        )
+        im = g.op(
+            "Slice",
+            sq,
+            g.const([bins], dtype=np.int64),
+            g.const([2 * bins], dtype=np.int64),
+            g.const([1], dtype=np.int64),
+        )
+        return g.op("Add", re, im)  # [1, bins, F]
+    if stft == "native":
+        sig = g.op("Transpose", x3, perm=[0, 2, 1])  # [1, L, 1]
+        spec = g.op(
+            "STFT",
+            sig,
+            g.const(hop, dtype=np.int64),
+            g.const(window.astype(np.float32)),
+            g.const(n_fft, dtype=np.int64),
+            onesided=1,
+        )  # [1, F, bins, 2]
+        sq = g.op("Mul", spec, spec)
+        p = g.op("ReduceSum", sq, g.const([3], dtype=np.int64), keepdims=0)  # [1, F, bins]
+        return g.op("Transpose", p, perm=[0, 2, 1])
+    raise ValueError(f"stft must be 'conv' or 'native', got {stft!r}")
+
+
+def whisper_log_mel(
+    n_mels: int = 80,
+    *,
+    stft: Literal["conv", "native"] = "conv",
+    pad_to_30s: bool = True,
+    static_input: bool = False,
+) -> onnx.ModelProto:
+    """Whisper's log-mel front end as a standalone ONNX model.
+
+    Input ``audio``: float32 ``[num_samples]``, mono, 16 kHz, range [-1, 1].
+    Output ``input_features``: float32 ``[1, n_mels, 3000]`` (or ``[1, n_mels, num_samples // 160]`` when
+    ``pad_to_30s=False``).
+
+    ``n_mels=80`` for Whisper tiny…large-v2, ``n_mels=128`` for large-v3 / turbo.
+
+    ``static_input=True`` fixes the input to exactly 480 000 samples (caller pads / trims). Static shapes let
+    GPU execution providers such as CoreML take far more of the graph (17/19 nodes vs 8/23 dynamic).
+    """
+    if static_input and not pad_to_30s:
+        raise ValueError("static_input=True implies a fixed 30 s window; use pad_to_30s=True")
+    g = Graph("whisper_log_mel")
+    x = g.input("audio", np.float32, [N_SAMPLES] if static_input else ["num_samples"])
+    if pad_to_30s and not static_input:
+        x = _pad_or_trim(g, x, N_SAMPLES)
+    power = _power_spectrogram(g, x, N_FFT, HOP_LENGTH, stft)
+    # Whisper drops the last STFT frame: stft[..., :-1]
+    power = g.op(
+        "Slice",
+        power,
+        g.const([0], dtype=np.int64),
+        g.const([-1], dtype=np.int64),
+        g.const([2], dtype=np.int64),
+    )
+    mel = g.op("MatMul", g.const(mel_filterbank(SAMPLE_RATE, N_FFT, n_mels), name="mel_filters"), power)
+    log = g.op(
+        "Div",
+        g.op("Log", g.op("Max", mel, g.const(1e-10, dtype=np.float32))),
+        g.const(np.log(10.0), dtype=np.float32),
+    )  # log10
+    floor = g.op("Sub", g.op("ReduceMax", log, keepdims=0), g.const(8.0, dtype=np.float32))
+    log = g.op("Max", log, floor)
+    out = g.op("Div", g.op("Add", log, g.const(4.0, dtype=np.float32)), g.const(4.0, dtype=np.float32))
+    frames = N_FRAMES if pad_to_30s else "num_frames"
+    g.output(out, "input_features", np.float32, [1, n_mels, frames])
+    return g.model(
+        doc=f"Whisper log-mel front end ({n_mels} mels, stft={stft}). Built by onnxprep from standard ONNX ops.",
+        metadata={
+            "onnxprep.recipe": "whisper_log_mel",
+            "n_mels": n_mels,
+            "stft": stft,
+            "sample_rate": SAMPLE_RATE,
+            "pad_to_30s": pad_to_30s,
+            "static_input": static_input,
+        },
+    )

@@ -1,0 +1,43 @@
+[project]
+name = "onnxprep"
+version = "0.1.0"
+description = "Portable pre/post-processing as pure standard-op ONNX graphs: raw input in, final answer out, on any runtime and any GPU."
+readme = "README.md"
+license = "MIT"
+keywords = ["onnx", "onnxruntime", "preprocessing", "webgpu", "whisper", "spectrogram", "edge-ml"]
+authors = [
+    { name = "Devon Copp", email = "devoncopp@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=1.26",
+    "onnx>=1.15",
+]
+
+[project.optional-dependencies]
+runtime = [
+    "onnxruntime>=1.17",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "librosa>=1.0.1",
+    "onnxruntime>=1.32.0",
+    "pytest>=9.2.0",
+    "ruff>=0.17.5",
+    "transformers>=5.23.0",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "NPY"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
