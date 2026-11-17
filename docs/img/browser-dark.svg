@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="168" viewBox="0 0 880 168" role="img">
+<title>Time per 30 second clip in the browser</title>
+<line x1="250.0" y1="8.0" x2="250.0" y2="128.0" stroke="#30363d" stroke-width="1"/>
+<text x="250.0" y="142.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#9198a1" text-anchor="middle" dominant-baseline="middle">1.0 ms</text>
+<line x1="530.0" y1="8.0" x2="530.0" y2="128.0" stroke="#30363d" stroke-width="1"/>
+<text x="530.0" y="142.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#9198a1" text-anchor="middle" dominant-baseline="middle">10 ms</text>
+<line x1="810.0" y1="8.0" x2="810.0" y2="128.0" stroke="#30363d" stroke-width="1"/>
+<text x="810.0" y="142.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#9198a1" text-anchor="middle" dominant-baseline="middle">100 ms</text>
+<text x="810.0" y="160.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#9198a1" text-anchor="end" dominant-baseline="middle">time per 30 s clip in Chromium, log scale (shorter is better)</text>
+<text x="238.0" y="23.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#e6edf3" text-anchor="end" dominant-baseline="middle">onnxprep, WebGPU, 8 per call</text>
+<path d="M250.0,16.0 H410.7 Q414.7,16.0 414.7,20.0 V26.0 Q414.7,30.0 410.7,30.0 H250.0 Z" fill="#3987e5"/>
+<text x="420.7" y="23.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#e6edf3" text-anchor="start" dominant-baseline="middle">3.9 ms</text>
+<text x="238.0" y="53.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#e6edf3" text-anchor="end" dominant-baseline="middle">onnxprep, WASM</text>
+<path d="M250.0,46.0 H453.6 Q457.6,46.0 457.6,50.0 V56.0 Q457.6,60.0 453.6,60.0 H250.0 Z" fill="#3987e5"/>
+<text x="463.6" y="53.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#e6edf3" text-anchor="start" dominant-baseline="middle">5.5 ms</text>
+<text x="238.0" y="83.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#e6edf3" text-anchor="end" dominant-baseline="middle">onnxprep, WebGPU</text>
+<path d="M250.0,76.0 H507.7 Q511.7,76.0 511.7,80.0 V86.0 Q511.7,90.0 507.7,90.0 H250.0 Z" fill="#3987e5"/>
+<text x="517.7" y="83.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#e6edf3" text-anchor="start" dominant-baseline="middle">8.6 ms</text>
+<text x="238.0" y="113.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#e6edf3" text-anchor="end" dominant-baseline="middle">transformers.js</text>
+<path d="M250.0,106.0 H763.8 Q767.8,106.0 767.8,110.0 V116.0 Q767.8,120.0 763.8,120.0 H250.0 Z" fill="#6e7681"/>
+<text x="773.8" y="113.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="11" font-weight="400" fill="#e6edf3" text-anchor="start" dominant-baseline="middle">71 ms</text>
+</svg>

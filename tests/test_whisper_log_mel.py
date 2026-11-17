@@ -94,3 +94,17 @@ def test_batch_matches_one_clip_at_a_time(stft):
     for i, clip in enumerate(clips):
         np.testing.assert_allclose(out[i], single.run(None, {"audio": clip})[0][0], atol=1e-5)
         np.testing.assert_allclose(out[i : i + 1], _reference(clip, 80), atol=TOL[stft])
+
+
+def test_loads_in_older_runtimes():
+    # onnxruntime-web 1.30 refuses IR versions above 9
+    assert whisper_log_mel().ir_version <= 9
+
+
+def test_cli_writes_a_model(tmp_path):
+    from onnxprep.cli import main
+
+    out = tmp_path / "frontend.onnx"
+    main(["whisper", "--mels", "128", "--batch", "-o", str(out)])
+    model = onnx.load(out)
+    assert model.graph.output[0].type.tensor_type.shape.dim[1].dim_value == 128

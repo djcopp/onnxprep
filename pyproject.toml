@@ -1,6 +1,6 @@
 [project]
 name = "onnxprep"
-version = "0.1.0"
+version = "0.2.0"
 description = "Model pre- and post-processing as ONNX graphs built from standard operators, so they run on any runtime."
 readme = "README.md"
 license = "MIT"
@@ -13,6 +13,9 @@ dependencies = [
     "numpy>=1.26",
     "onnx>=1.15",
 ]
+
+[project.scripts]
+onnxprep = "onnxprep.cli:main"
 
 [project.optional-dependencies]
 runtime = [

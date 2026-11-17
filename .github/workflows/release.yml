@@ -1,0 +1,20 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  models:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync
+      - run: uv run pytest -q
+      - run: uv run python scripts/build_models.py dist/models
+      - run: gh release create "$GITHUB_REF_NAME" dist/models/*.onnx --title "$GITHUB_REF_NAME" --notes-file CHANGELOG.md
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -13,6 +13,9 @@ import onnx
 from onnx import TensorProto, helper, numpy_helper
 
 OPSET = 17  # first opset with STFT / DFT / MelWeightMatrix; widely supported by runtimes
+# The oldest IR version that can carry opset 17. Newer `onnx` releases stamp a newer one by default, which
+# onnxruntime-web and older onnxruntime builds refuse to load.
+IR_VERSION = 8
 
 _DTYPES = {
     np.dtype(np.float32): TensorProto.FLOAT,
@@ -61,6 +64,7 @@ class Graph:
     def model(self, doc: str = "", metadata: dict[str, str] | None = None) -> onnx.ModelProto:
         g = helper.make_graph(self.nodes, self.name, self.inputs, self.outputs, initializer=self.inits)
         m = helper.make_model(g, opset_imports=[helper.make_opsetid("", OPSET)], producer_name="onnxprep")
+        m.ir_version = IR_VERSION
         m.doc_string = doc
         for k, v in (metadata or {}).items():
             m.metadata_props.append(onnx.StringStringEntryProto(key=k, value=str(v)))

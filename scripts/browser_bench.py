@@ -46,7 +46,6 @@ def main() -> None:
         site = pathlib.Path(tmp)
         (site / "index.html").write_text((ROOT / "bench" / "index.html").read_text())
         for name, model in [("single", whisper_log_mel()), ("batch", whisper_log_mel(batch=True))]:
-            model.ir_version = min(model.ir_version, 9)  # onnxruntime-web 1.30 refuses newer IR versions
             onnx.save(model, site / f"{name}.onnx")
         server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(IsolatedHandler, directory=tmp))
         threading.Thread(target=server.serve_forever, daemon=True).start()

@@ -5,53 +5,53 @@
  "baselines": [
   {
    "name": "Hugging Face, numpy",
-   "ms": 11.2728540043463
+   "ms": 10.694771000999026
   },
   {
    "name": "Hugging Face, torch cpu",
-   "ms": 1.4201254962245002
+   "ms": 1.4095834994805045
   },
   {
    "name": "Hugging Face, torch mps",
-   "ms": 1.4831250009592623
+   "ms": 2.6798335020430386
   }
  ],
  "onnx": [
   {
    "variant": "conv",
    "provider": "CoreML",
-   "nodes": "15/23",
-   "ms": 8.102
+   "nodes": "16/24",
+   "ms": 8.438
   },
   {
    "variant": "conv",
    "provider": "CPU",
    "nodes": "all",
-   "ms": 3.145
+   "ms": 2.918
   },
   {
    "variant": "conv, static input",
    "provider": "CoreML",
-   "nodes": "15/17",
-   "ms": 4.599
+   "nodes": "16/18",
+   "ms": 4.535
   },
   {
    "variant": "conv, static input",
    "provider": "CPU",
    "nodes": "all",
-   "ms": 2.942
+   "ms": 2.87
   },
   {
    "variant": "native STFT",
    "provider": "CoreML",
-   "nodes": "4/23",
-   "ms": 74.937
+   "nodes": "5/24",
+   "ms": 74.272
   },
   {
    "variant": "native STFT",
    "provider": "CPU",
    "nodes": "all",
-   "ms": 73.855
+   "ms": 73.174
   }
  ]
 }

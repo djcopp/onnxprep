@@ -168,7 +168,7 @@ def whisper_log_mel(
     Use ``n_mels=80`` for Whisper tiny to large-v2 and ``n_mels=128`` for large-v3 and turbo.
 
     ``static_input=True`` fixes the input at exactly 480,000 samples, and the caller pads or trims. With
-    static shapes CoreML runs 15 of 17 nodes instead of 15 of 23, and the clip takes about half as long.
+    static shapes CoreML runs 16 of 18 nodes instead of 16 of 24, and the clip takes about half as long.
 
     ``batch=True`` takes ``[batch, num_samples]`` and returns ``[batch, n_mels, 3000]``, one clip per row.
     Every row shares ``num_samples``, so pad shorter clips with zeros (Whisper pads with zeros anyway).
