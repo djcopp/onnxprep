@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>onnxprep browser bench</title>
+<style>
+  :root { --bg: #fbfaf8; --fg: #1c1b19; --muted: #6b6862; --line: #e4e1db; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #151514; --fg: #ecebe8; --muted: #9a978f; --line: #2d2c2a; } }
+  body { background: var(--bg); color: var(--fg); font: 14px/1.5 ui-sans-serif, system-ui, sans-serif; margin: 24px 16px; }
+  table { border-collapse: collapse; } td, th { border-bottom: 1px solid var(--line); padding: 6px 10px; text-align: left; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; } #log { color: var(--muted); white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>onnxprep browser bench</h1>
+<p id="env"></p>
+<table><thead><tr><th>implementation</th><th>clips per call</th><th>ms per clip</th><th>max diff vs transformers.js</th></tr></thead><tbody id="rows"></tbody></table>
+<pre id="log"></pre>
+<script type="module">
+// Whisper log-mel features for 30 s clips: transformers.js's JavaScript extractor against the onnxprep
+// graph on WebGPU and WASM. Query parameters: ort=<onnxruntime-web version>, tjs=<transformers.js version>.
+const params = new URLSearchParams(location.search);
+const ORT = params.get("ort") || "1.30.0";
+const TJS = params.get("tjs") || "4.3.2";
+const REPS = Number(params.get("reps") || 15);
+const BATCH = Number(params.get("batch") || 8);
+const log = (s) => { document.getElementById("log").textContent += s + "\n"; console.log(`[bench] ${s}`); };
+
+function addRow(cells) {
+  const tr = document.createElement("tr");
+  cells.forEach((c, i) => { const td = document.createElement("td"); td.textContent = c; if (i > 0) td.className = "num"; tr.appendChild(td); });
+  document.getElementById("rows").appendChild(tr);
+}
+
+async function median(fn, reps = REPS) {
+  await fn(); await fn();
+  const t = [];
+  for (let i = 0; i < reps; i++) { const s = performance.now(); await fn(); t.push(performance.now() - s); }
+  t.sort((a, b) => a - b);
+  return t[Math.floor(t.length / 2)];
+}
+
+function maxDiff(a, b) {
+  let m = 0;
+  for (let i = 0; i < a.length; i++) m = Math.max(m, Math.abs(a[i] - b[i]));
+  return m;
+}
+
+function clip(seed) {  // 30 s chirp plus noise, the same shape of signal the Python tests use
+  const n = 480000, x = new Float32Array(n);
+  let s = seed * 9973 + 1;
+  const rand = () => ((s = (s * 16807) % 2147483647) / 2147483647) * 2 - 1;
+  for (let i = 0; i < n; i++) { const t = i / 16000; x[i] = 0.3 * Math.sin(2 * Math.PI * (200 + 900 * t / 30) * t) + 0.05 * rand(); }
+  return x;
+}
+
+async function loadScript(src) {
+  await new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+}
+
+(async () => {
+  await loadScript(`https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT}/dist/ort.webgpu.min.js`);
+  ort.env.wasm.numThreads = navigator.hardwareConcurrency;
+  const { WhisperFeatureExtractor } = await import(`https://cdn.jsdelivr.net/npm/@huggingface/transformers@${TJS}/dist/transformers.min.js`);
+  const adapter = "gpu" in navigator ? await navigator.gpu.requestAdapter() : null;
+  const env = { ort: ORT, transformers_js: TJS, webgpu: adapter ? (adapter.info?.description || adapter.info?.vendor || "available") : "none",
+                threads: navigator.hardwareConcurrency, isolated: self.crossOriginIsolated, batch: BATCH };
+  document.getElementById("env").textContent = JSON.stringify(env);
+
+  const clips = Array.from({ length: BATCH }, (_, i) => clip(i + 1));
+  const results = [];
+
+  // transformers.js, one clip at a time (its extractor takes one clip per call)
+  const fe = new WhisperFeatureExtractor({
+    feature_size: 80, sampling_rate: 16000, hop_length: 160, chunk_length: 30, n_fft: 400, n_samples: 480000, nb_max_frames: 3000, padding_value: 0,
+  });
+  const refOut = (await fe(clips[0])).input_features.data;
+  const tjsMs = await median(() => fe(clips[0]));
+  addRow(["transformers.js", 1, tjsMs.toFixed(2), "0"]);
+  results.push({ name: "transformers.js", batch: 1, ms_per_clip: tjsMs });
+  log(`transformers.js ${tjsMs.toFixed(2)} ms per clip`);
+
+  for (const backend of ["webgpu", "wasm"]) {
+    for (const [file, n] of [["single.onnx", 1], ["batch.onnx", BATCH]]) {
+      try {
+        const session = await ort.InferenceSession.create(file, { executionProviders: [backend], graphOptimizationLevel: "all" });
+        const data = new Float32Array(n * 480000);
+        for (let i = 0; i < n; i++) data.set(clips[i], i * 480000);
+        const feeds = { audio: new ort.Tensor("float32", data, n === 1 ? [480000] : [n, 480000]) };
+        const out = (await session.run(feeds)).input_features.data;
+        const diff = maxDiff(out.subarray(0, refOut.length), refOut);
+        const ms = await median(() => session.run(feeds));
+        const name = `onnxprep, ${backend}`;
+        addRow([name, n, (ms / n).toFixed(2), diff.toExponential(1)]);
+        results.push({ name, batch: n, ms_per_clip: ms / n, max_diff: diff });
+        log(`${name} batch ${n}: ${(ms / n).toFixed(2)} ms per clip, max diff ${diff.toExponential(1)}`);
+        await session.release();
+      } catch (e) {
+        results.push({ name: `onnxprep, ${backend}`, batch: n, error: String(e).slice(0, 300) });
+        log(`${backend} ${file} error: ${e}`);
+      }
+    }
+  }
+  window.benchResults = { env, results };
+  log("finished");
+})().catch((e) => { log(String(e)); window.benchResults = { error: String(e) }; });
+</script>
+</body>
+</html>

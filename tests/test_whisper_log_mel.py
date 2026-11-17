@@ -81,3 +81,16 @@ def test_static_input_matches_dynamic():
 def test_static_input_requires_padding():
     with pytest.raises(ValueError):
         whisper_log_mel(static_input=True, pad_to_30s=False)
+
+
+@pytest.mark.parametrize("stft", ["conv", "native"])
+def test_batch_matches_one_clip_at_a_time(stft):
+    clips = [_signal(s, seed=i) for i, s in enumerate([3.0, 12.0, 30.0])]
+    length = max(c.size for c in clips)
+    batch = np.stack([np.pad(c, (0, length - c.size)) for c in clips])
+    out = _session(whisper_log_mel(stft=stft, batch=True)).run(None, {"audio": batch})[0]
+    assert out.shape == (3, 80, N_FRAMES)
+    single = _session(whisper_log_mel(stft=stft))
+    for i, clip in enumerate(clips):
+        np.testing.assert_allclose(out[i], single.run(None, {"audio": clip})[0][0], atol=1e-5)
+        np.testing.assert_allclose(out[i : i + 1], _reference(clip, 80), atol=TOL[stft])

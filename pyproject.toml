@@ -27,6 +27,7 @@ build-backend = "uv_build"
 dev = [
     "librosa>=1.0.1",
     "onnxruntime>=1.32.0",
+    "playwright>=1.65.2",
     "pytest>=9.2.0",
     "ruff>=0.17.5",
     "torch>=2.15.0",

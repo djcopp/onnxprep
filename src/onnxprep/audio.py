@@ -87,27 +87,26 @@ def _dft_conv_kernels(n_fft: int, window: np.ndarray) -> np.ndarray:
 
 
 def _pad_or_trim(g: Graph, x: str, length: int) -> str:
-    """1-D: zero-pad at the end or truncate to exactly ``length`` samples (branch-free)."""
-    n = g.op("Shape", x)
-    need = g.op("Sub", g.const([length], dtype=np.int64), n)
-    need = g.op("Max", need, g.const([0], dtype=np.int64))
-    pads = g.op("Concat", g.const([0], dtype=np.int64), need, axis=0)
+    """[B, samples]: zero-pad at the end or truncate to exactly ``length`` samples (branch-free)."""
+    n = g.op("Shape", x, start=-1)
+    need = g.op("Max", g.op("Sub", g.const([length], dtype=np.int64), n), g.const([0], dtype=np.int64))
+    pads = g.op("Concat", g.const([0, 0, 0], dtype=np.int64), need, axis=0)  # [begin B, begin L, end B, end L]
     padded = g.op("Pad", x, pads, g.const(0.0, dtype=np.float32), mode="constant")
     return g.op(
         "Slice",
         padded,
         g.const([0], dtype=np.int64),
         g.const([length], dtype=np.int64),
-        g.const([0], dtype=np.int64),
+        g.const([1], dtype=np.int64),
     )
 
 
 def _power_spectrogram(g: Graph, x: str, n_fft: int, hop: int, stft: str) -> str:
-    """1-D signal to a ``[1, n_fft//2+1, frames]`` power spectrum. Frames are centred with reflect padding,
-    as in ``torch.stft(center=True, pad_mode="reflect")``."""
+    """``[B, samples]`` signals to a ``[B, n_fft//2+1, frames]`` power spectrum. Frames are centred with
+    reflect padding, as in ``torch.stft(center=True, pad_mode="reflect")``."""
     bins = n_fft // 2 + 1
     window = hann_window(n_fft)
-    x3 = g.op("Reshape", x, g.const([1, 1, -1], dtype=np.int64))
+    x3 = g.op("Unsqueeze", x, g.const([1], dtype=np.int64))  # [B, 1, samples]
     x3 = g.op("Pad", x3, g.const([0, 0, n_fft // 2, 0, 0, n_fft // 2], dtype=np.int64), mode="reflect")
     if stft == "conv":
         spec = g.op(
@@ -158,6 +157,7 @@ def whisper_log_mel(
     stft: Literal["conv", "native"] = "conv",
     pad_to_30s: bool = True,
     static_input: bool = False,
+    batch: bool = False,
 ) -> onnx.ModelProto:
     """Whisper's log-mel front end as a standalone ONNX model.
 
@@ -169,11 +169,18 @@ def whisper_log_mel(
 
     ``static_input=True`` fixes the input at exactly 480,000 samples, and the caller pads or trims. With
     static shapes CoreML runs 15 of 17 nodes instead of 15 of 23, and the clip takes about half as long.
+
+    ``batch=True`` takes ``[batch, num_samples]`` and returns ``[batch, n_mels, 3000]``, one clip per row.
+    Every row shares ``num_samples``, so pad shorter clips with zeros (Whisper pads with zeros anyway).
     """
     if static_input and not pad_to_30s:
         raise ValueError("static_input=True implies a fixed 30 s window; use pad_to_30s=True")
     g = Graph("whisper_log_mel")
-    x = g.input("audio", np.float32, [N_SAMPLES] if static_input else ["num_samples"])
+    samples = N_SAMPLES if static_input else "num_samples"
+    if batch:
+        x = g.input("audio", np.float32, ["batch", samples])
+    else:
+        x = g.op("Unsqueeze", g.input("audio", np.float32, [samples]), g.const([0], dtype=np.int64))
     if pad_to_30s and not static_input:
         x = _pad_or_trim(g, x, N_SAMPLES)
     power = _power_spectrogram(g, x, N_FFT, HOP_LENGTH, stft)
@@ -191,11 +198,12 @@ def whisper_log_mel(
         g.op("Log", g.op("Max", mel, g.const(1e-10, dtype=np.float32))),
         g.const(np.log(10.0), dtype=np.float32),
     )  # log10
-    floor = g.op("Sub", g.op("ReduceMax", log, keepdims=0), g.const(8.0, dtype=np.float32))
+    peak = g.op("ReduceMax", log, axes=[1, 2], keepdims=1)  # per clip
+    floor = g.op("Sub", peak, g.const(8.0, dtype=np.float32))
     log = g.op("Max", log, floor)
     out = g.op("Div", g.op("Add", log, g.const(4.0, dtype=np.float32)), g.const(4.0, dtype=np.float32))
     frames = N_FRAMES if pad_to_30s else "num_frames"
-    g.output(out, "input_features", np.float32, [1, n_mels, frames])
+    g.output(out, "input_features", np.float32, ["batch" if batch else 1, n_mels, frames])
     return g.model(
         doc=f"Whisper log-mel front end ({n_mels} mels, stft={stft}). Built by onnxprep from standard ONNX ops.",
         metadata={
@@ -205,5 +213,6 @@ def whisper_log_mel(
             "sample_rate": SAMPLE_RATE,
             "pad_to_30s": pad_to_30s,
             "static_input": static_input,
+            "batch": batch,
         },
     )

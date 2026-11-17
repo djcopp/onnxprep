@@ -1,0 +1,41 @@
+{
+ "env": {
+  "ort": "1.30.0",
+  "transformers_js": "4.3.2",
+  "webgpu": "apple",
+  "threads": 10,
+  "isolated": true,
+  "batch": 8
+ },
+ "results": [
+  {
+   "name": "transformers.js",
+   "batch": 1,
+   "ms_per_clip": 70.67000000178814
+  },
+  {
+   "name": "onnxprep, webgpu",
+   "batch": 1,
+   "ms_per_clip": 8.600000008940697,
+   "max_diff": 1.3709068298339844e-05
+  },
+  {
+   "name": "onnxprep, webgpu",
+   "batch": 8,
+   "ms_per_clip": 3.8756249994039536,
+   "max_diff": 1.3709068298339844e-05
+  },
+  {
+   "name": "onnxprep, wasm",
+   "batch": 1,
+   "ms_per_clip": 5.5150000005960464,
+   "max_diff": 1.6808509826660156e-05
+  },
+  {
+   "name": "onnxprep, wasm",
+   "batch": 8,
+   "ms_per_clip": 5.653750000521541,
+   "max_diff": 1.6808509826660156e-05
+  }
+ ]
+}
