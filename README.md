@@ -100,7 +100,7 @@ The conv version with a static input keeps 15 of 17.
 
 ## Status
 
-Version 0.1, one recipe. Tested on Linux, macOS and Windows in CI.
+Version 0.1, one recipe. CI runs the tests on Linux, macOS and Windows.
 
 Planned:
 
